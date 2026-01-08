@@ -1,0 +1,23 @@
+# Logs
+logs/
+*.log
+
+# Environment files with secrets
+.env
+
+# Roc build artifacts
+*.roc.o
+*.roc.a
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Legacy (if still present)
+aura-turbo/
+adk_agent/

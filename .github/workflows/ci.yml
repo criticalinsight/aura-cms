@@ -1,0 +1,85 @@
+name: Aura-Roc CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  ROC_VERSION: nightly
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Cache Roc compiler
+        uses: actions/cache@v4
+        with:
+          path: ~/roc_nightly*
+          key: roc-${{ env.ROC_VERSION }}-${{ runner.os }}
+      
+      - name: Install Roc compiler
+        run: |
+          cd ~
+          if [ ! -d "roc_nightly"* ]; then
+            curl -fsSL https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-latest.tar.gz -o roc.tar.gz
+            tar -xzf roc.tar.gz
+            rm roc.tar.gz
+          fi
+          ROC_DIR=$(find ~ -maxdepth 1 -name "roc_nightly*" -type d | head -n 1)
+          echo "$ROC_DIR" >> $GITHUB_PATH
+      
+      - name: Check Roc version
+        run: roc --version
+      
+      - name: Type check main.roc
+        working-directory: aura-roc
+        run: roc check main.roc
+      
+      - name: Type check server.roc
+        working-directory: aura-roc
+        run: roc check server.roc
+      
+      - name: Type check cron.roc
+        working-directory: aura-roc
+        run: roc check cron.roc
+      
+      - name: Build optimized binaries
+        working-directory: aura-roc
+        run: |
+          mkdir -p bin
+          roc build main.roc --optimize --output bin/aura-cli
+          roc build server.roc --optimize --output bin/aura-server
+          roc build cron.roc --optimize --output bin/aura-cron
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-roc-binaries
+          path: aura-roc/bin/
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: aura-roc-binaries
+          path: bin/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: bin/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

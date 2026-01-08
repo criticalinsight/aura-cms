@@ -1,0 +1,28 @@
+[Unit]
+Description=Aura-Roc AI Server
+Documentation=https://github.com/user/zigchdb
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/aura-roc
+Environment=GOOGLE_API_KEY=your-api-key-here
+ExecStart=/home/ubuntu/aura-roc/bin/aura-server
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/aura-server.log
+StandardError=append:/var/log/aura-server.log
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
