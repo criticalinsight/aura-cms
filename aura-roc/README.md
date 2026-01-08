@@ -1,84 +1,58 @@
-# Aura-Roc
+# Aura CMS - Roc Engine
 
-The Roc implementation of the Aura AI Content Factory - a pure functional CLI and server for AI-powered research.
-
-## Prerequisites
-
-- **Roc Compiler**: Download from [roc-lang.org](https://roc-lang.org)
-  - Linux/Mac: Direct install supported
-  - Windows: Use WSL (Ubuntu recommended)
-- **Google API Key**: Required for Gemini integration
+The Roc implementation of Aura CMS - a pure functional CLI and server for AI-powered content management.
 
 ## Components
 
 | File | Description |
 |------|-------------|
-| `main.roc` | Interactive CLI + one-shot mode |
-| `server.roc` | HTTP server with `/chat` endpoint |
+| `main.roc` | Interactive CLI + research mode |
+| `server.roc` | HTTP server with CORS & caching |
 | `cron.roc` | Scheduled task runner |
-| `Db.roc` | Persistence layer |
+| `Db.roc` | Caching layer with TTL |
 
 ## Usage
 
 ### Interactive CLI
 ```bash
 ./run_client.sh
-# Type queries, 'exit' to quit
 ```
 
-### One-Shot Mode
+### Research Mode
 ```bash
-./run_client.sh --prompt "Research topic here"
+./run_client.sh --research "AI trends 2026"
+# Runs 4-phase deep research: Overview → Concepts → Trends → Outlook
 ```
 
 ### HTTP Server
 ```bash
-export GOOGLE_API_KEY="your-key"
 ./run_server.sh
 
-# Then POST to localhost:8000/chat
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "Explain quantum computing"}'
+  -d '{"prompt": "Explain machine learning"}'
 ```
 
-### Cron Service
+## Build
+
 ```bash
-./run_cron.sh
+./build.sh
+# Creates optimized binaries in ./bin/
 ```
 
 ## Architecture
 
 ```
-┌────────────────┐     ┌────────────────┐
-│   main.roc     │     │  server.roc    │
-│   (CLI Mode)   │     │  (HTTP Mode)   │
-└───────┬────────┘     └───────┬────────┘
-        │                      │
-        └──────────┬───────────┘
-                   │
-           ┌───────▼───────┐
-           │  Gemini API   │
-           │ (2.5-flash)   │
-           └───────────────┘
-```
-
-## Scripts
-
-All scripts auto-detect the Roc compiler in `~/roc_nightly*/`:
-
-- `run_client.sh` - CLI launcher
-- `run_server.sh` - Server launcher (sets `GOOGLE_API_KEY`)
-- `run_cron.sh` - Cron service launcher
-- `start.sh` - Master orchestrator
-
-## Development
-
-Build and run directly with Roc:
-```bash
-roc run main.roc -- --prompt "Test"
-roc run server.roc
-roc run cron.roc
+┌─────────────┐     ┌─────────────┐
+│  main.roc   │     │ server.roc  │
+│  (CLI)      │     │ (HTTP+CORS) │
+└──────┬──────┘     └──────┬──────┘
+       └────────┬──────────┘
+                │
+        ┌───────▼───────┐
+        │  Gemini API   │
+        │  (2.5-flash)  │
+        └───────────────┘
 ```
 
 ---

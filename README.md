@@ -1,75 +1,84 @@
-# ZigchDB: Aura-Roc AI Content Factory
+# Aura CMS
 
-**ZigchDB** is a high-performance, local-first AI Content Factory. It combines a **Roc** functional programming language application with **Gemini-powered** AI research capabilities to automate deep research and content synthesis.
+**Aura CMS** is a high-performance, local-first AI Content Management System. Built with **Roc** functional programming and powered by **Gemini AI** for intelligent research and content synthesis.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Aura-Roc Stack                         │
+│                      Aura CMS Stack                         │
 ├─────────────────────────────────────────────────────────────┤
-│  main.roc     │  Interactive CLI & One-Shot Mode           │
-│  server.roc   │  HTTP Server with Gemini API Integration   │
+│  main.roc     │  Interactive CLI & Research Mode           │
+│  server.roc   │  HTTP Server with Gemini API + CORS        │
 │  cron.roc     │  Scheduled Task Runner                     │
-│  Db.roc       │  Database/Persistence Layer                │
+│  Db.roc       │  Caching & Persistence Layer               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-- **`aura-roc/`**: The main Roc engine. A pure functional CLI and server that handles user interaction and AI-powered research via Gemini.
-- **`adk_agent/`**: Optional Python agent layer for extended tooling (Google ADK).
-
 ## Quick Start (WSL/Linux)
 
-> **Note**: Roc does not yet support native Windows. Use WSL (Ubuntu) for development.
+> **Note**: Roc does not support native Windows. Use WSL (Ubuntu) for development.
 
 ### 1. Install Roc Compiler
 ```bash
-# Download latest nightly to home directory
-cd ~
-curl -L https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-latest.tar.gz -o roc.tar.gz
-tar -xzf roc.tar.gz
+./install_roc.sh
 ```
 
-### 2. Run the CLI
+### 2. Configure API Key
 ```bash
 cd aura-roc
-./run_client.sh
-
-# Or one-shot mode:
-./run_client.sh --prompt "Research quantum computing"
+cp .env.example .env
+# Edit .env with your GOOGLE_API_KEY
 ```
 
-### 3. Run the Server (with Gemini)
+### 3. Run the CLI
 ```bash
-# Set your API key in the script or environment
-export GOOGLE_API_KEY="your-key-here"
+./run_client.sh
+
+# Or with research mode:
+./run_client.sh --research "Quantum computing trends"
+```
+
+### 4. Run the Server
+```bash
 ./run_server.sh
+# Server runs at http://localhost:8000
 ```
 
 ## Key Features
 
-- **Interactive Research**: Query the Gemini AI directly from your terminal.
-- **Pure Functional**: Built with Roc - statically typed, no runtime exceptions.
-- **Server Mode**: HTTP server with `/chat` endpoint for programmatic access.
-- **Cron Service**: Scheduled task execution with `cron.roc`.
+- **Deep Research Mode**: Multi-phase AI research with `--research` flag
+- **Pure Functional**: Built with Roc - statically typed, no runtime exceptions
+- **HTTP API**: RESTful server with CORS, rate limiting, and health checks
+- **Response Caching**: DuckDB-backed caching with configurable TTL
+- **CI/CD Ready**: GitHub Actions workflow included
 
-## Development Status
+## API Endpoints
 
-- [x] Zig to Roc Migration
-- [x] CLI Interactive Mode
-- [x] One-Shot Command Mode
-- [x] Gemini 2.5-Flash Integration
-- [x] HTTP Server Implementation
-- [x] Cron/Scheduler Module
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/chat` | POST | Send prompt, receive AI response |
+| `/health` | GET | Server health and version |
+| `/metrics` | GET | Server metrics |
 
-## Shell Scripts
+## Development
 
-| Script | Purpose |
-|--------|---------|
-| `run_client.sh` | Run the interactive CLI |
-| `run_server.sh` | Start the HTTP server |
-| `run_cron.sh` | Start the cron service |
-| `start.sh` | Master launcher script |
+```bash
+# Build optimized binaries
+./build.sh
+
+# Run tests via GitHub Actions
+git push origin main
+```
+
+## Production Deployment
+
+```bash
+# Copy systemd service
+sudo cp aura-server.service /etc/systemd/system/
+sudo systemctl enable aura-server
+sudo systemctl start aura-server
+```
 
 ---
 *Powered by Roc Lang & Gemini AI | 2026*
