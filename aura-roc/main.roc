@@ -1,214 +1,147 @@
-app "aura-roc"
-    packages {
-        pf: "https://github.com/roc-lang/basic-cli/releases/download/0.10.0/vNe6s9hWzoTZtFmNkvEICPErI9ptji_ySjicO6CkucY.tar.br",
-    }
-    imports [
-        pf.Stdout,
-        pf.Stdin,
-        pf.Task.{ Task },
-        pf.Http,
-        pf.Arg,
-    ]
-    provides [main] to pf
+app [main!] { pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br" }
 
-version = "1.0.0"
+import pf.Stdout
+import pf.Stdin
+import pf.Http
+import pf.Arg exposing [Arg]
 
-helpText =
-    """
-    Aura-Roc CLI v$(version)
-    
-    USAGE:
-        roc run main.roc [OPTIONS]
-    
-    OPTIONS:
-        --help, -h           Show this help message
-        --version, -v        Show version information
-        --prompt TEXT        Run one-shot mode with the given prompt
-        --research TOPIC     Deep research mode with multiple queries
-    
-    EXAMPLES:
-        roc run main.roc                              # Interactive mode
-        roc run main.roc -- --prompt "Explain AI"     # One-shot mode
-        roc run main.roc -- --research "Quantum ML"   # Deep research mode
-    
-    In interactive mode, type 'exit' to quit.
-    """
-
-main =
-    args <- Arg.list |> Task.await
-    
-    if List.len args > 1 then
-        handleArgs args
+main! : List Arg => Result {} _
+main! = |args|
+    if List.len(args) > 1 then
+        handle_args!(args)
     else
-        interactiveLoop
+        interactive_loop!({})
 
-handleArgs : List Str -> Task {} []
-handleArgs args =
-    when List.get args 1 is
-        Ok arg ->
-            if arg == "--help" || arg == "-h" then
-                Stdout.line helpText
-            else if arg == "--version" || arg == "-v" then
-                Stdout.line "aura-roc v$(version)"
-            else if arg == "--prompt" then
-                when List.get args 2 is
-                    Ok prompt ->
-                        runOneShot prompt
-                    Err _ -> 
-                        Stdout.line "Error: --prompt requires a text argument."
-            else if arg == "--research" then
-                when List.get args 2 is
-                    Ok topic ->
-                        runResearch topic
-                    Err _ -> 
-                        Stdout.line "Error: --research requires a topic argument."
+handle_args! : List Arg => Result {} _
+handle_args! = |args|
+    when List.get(args, 1) is
+        Ok(arg) ->
+            arg_str = Arg.display(arg)
+            if arg_str == "--help" || arg_str == "-h" then
+                show_help!({})
+            else if arg_str == "--version" || arg_str == "-v" then
+                Stdout.line!("aura-cms v1.0.0")
+            else if arg_str == "--prompt" then
+                when List.get(args, 2) is
+                    Ok(prompt_arg) ->
+                        prompt = Arg.display(prompt_arg)
+                        run_one_shot!(prompt)
+                    Err(_) -> 
+                        Stdout.line!("Error: --prompt requires a text argument.")
+            else if arg_str == "--research" then
+                when List.get(args, 2) is
+                    Ok(topic_arg) ->
+                        topic = Arg.display(topic_arg)
+                        run_research!(topic)
+                    Err(_) -> 
+                        Stdout.line!("Error: --research requires a topic argument.")
             else
-                Stdout.line "Unknown argument: $(arg)\nRun with --help for usage."
-        Err _ -> 
-            Stdout.line "Error: Failed to parse arguments."
+                Stdout.line!(Str.concat("Unknown argument: ", arg_str))
+        Err(_) -> 
+            Stdout.line!("Error: Failed to parse arguments.")
 
-runOneShot : Str -> Task {} []
-runOneShot prompt =
-    Stdout.line "→ Running One-Shot Mode..."
-    |> Task.await \_ ->
-    callAgent prompt
-    |> Task.await \resp ->
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "Agent Response:"
-    |> Task.await \_ ->
-    Stdout.line resp
+show_help! : {} => Result {} _
+show_help! = |_|
+    Stdout.line!("Aura CMS CLI v1.0.0")?
+    Stdout.line!("")?
+    Stdout.line!("USAGE: roc main.roc [OPTIONS]")?
+    Stdout.line!("")?
+    Stdout.line!("OPTIONS:")?
+    Stdout.line!("  -h, --help        Show this help")?
+    Stdout.line!("  -v, --version     Show version")?
+    Stdout.line!("  --prompt TEXT     One-shot query")?
+    Stdout.line!("  --research TOPIC  Deep research mode")
 
-runResearch : Str -> Task {} []
-runResearch topic =
-    Stdout.line "╔══════════════════════════════════════╗"
-    |> Task.await \_ ->
-    Stdout.line "║     Deep Research Mode               ║"
-    |> Task.await \_ ->
-    Stdout.line "╚══════════════════════════════════════╝"
-    |> Task.await \_ ->
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "Topic: $(topic)"
-    |> Task.await \_ ->
-    Stdout.line "─────────────────────────────────────────"
-    |> Task.await \_ ->
-    
-    # Step 1: Overview
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "[1/4] Generating overview..."
-    |> Task.await \_ ->
-    callAgent "Provide a comprehensive overview of: $(topic)"
-    |> Task.await \overview ->
-    Stdout.line overview
-    |> Task.await \_ ->
-    
-    # Step 2: Key concepts
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "[2/4] Extracting key concepts..."
-    |> Task.await \_ ->
-    callAgent "List and explain the 5 most important concepts related to: $(topic)"
-    |> Task.await \concepts ->
-    Stdout.line concepts
-    |> Task.await \_ ->
-    
-    # Step 3: Current trends
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "[3/4] Analyzing current trends..."
-    |> Task.await \_ ->
-    callAgent "What are the latest trends and developments in: $(topic)"
-    |> Task.await \trends ->
-    Stdout.line trends
-    |> Task.await \_ ->
-    
-    # Step 4: Future outlook
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "[4/4] Predicting future outlook..."
-    |> Task.await \_ ->
-    callAgent "What is the future outlook and predictions for: $(topic)"
-    |> Task.await \future ->
-    Stdout.line future
-    |> Task.await \_ ->
-    
-    Stdout.line ""
-    |> Task.await \_ ->
-    Stdout.line "─────────────────────────────────────────"
-    |> Task.await \_ ->
-    Stdout.line "✓ Research complete for: $(topic)"
+run_one_shot! : Str => Result {} _
+run_one_shot! = |prompt|
+    Stdout.line!("-> Running One-Shot Mode...")?
+    resp = call_agent!(prompt)?
+    Stdout.line!("")?
+    Stdout.line!("Agent Response:")?
+    Stdout.line!(resp)
 
-interactiveLoop : Task {} []
-interactiveLoop =
-    Stdout.line "╔══════════════════════════════════════╗"
-    |> Task.await \_ ->
-    Stdout.line "║     Aura-Roc CLI v$(version)              ║"
-    |> Task.await \_ ->
-    Stdout.line "╚══════════════════════════════════════╝"
-    |> Task.await \_ ->
-    Stdout.line "Type 'help' for commands, 'exit' to quit."
-    |> Task.await \_ ->
-    loop {}
+run_research! : Str => Result {} _
+run_research! = |topic|
+    Stdout.line!("========================================")?
+    Stdout.line!("     Deep Research Mode")?
+    Stdout.line!("========================================")?
+    Stdout.line!("")?
+    Stdout.line!(Str.concat("Topic: ", topic))?
+    Stdout.line!("----------------------------------------")?
+    
+    Stdout.line!("")?
+    Stdout.line!("[1/4] Generating overview...")?
+    overview = call_agent!(Str.concat("Provide a comprehensive overview of: ", topic))?
+    Stdout.line!(overview)?
+    
+    Stdout.line!("")?
+    Stdout.line!("[2/4] Extracting key concepts...")?
+    concepts = call_agent!(Str.concat("List the 5 most important concepts related to: ", topic))?
+    Stdout.line!(concepts)?
+    
+    Stdout.line!("")?
+    Stdout.line!("[3/4] Analyzing current trends...")?
+    trends = call_agent!(Str.concat("What are the latest trends in: ", topic))?
+    Stdout.line!(trends)?
+    
+    Stdout.line!("")?
+    Stdout.line!("[4/4] Future outlook...")?
+    future = call_agent!(Str.concat("Future predictions for: ", topic))?
+    Stdout.line!(future)?
+    
+    Stdout.line!("")?
+    Stdout.line!("----------------------------------------")?
+    Stdout.line!(Str.concat("Research complete: ", topic))
 
-loop : {} -> Task {} []
-loop _ =
-    Stdout.write "\n> "
-    |> Task.await \_ ->
-    Stdin.line
-    |> Task.await \input ->
+interactive_loop! : {} => Result {} _
+interactive_loop! = |_|
+    Stdout.line!("========================================")?
+    Stdout.line!("     Aura CMS CLI v1.0.0")?
+    Stdout.line!("========================================")?
+    Stdout.line!("Type 'help' for commands, 'exit' to quit.")?
+    loop!({})
+
+loop! : {} => Result {} _
+loop! = |_|
+    Stdout.write!("> ")?
+    input = Stdin.line!({})?
+    trimmed = Str.trim(input)
     
-    trimmedInput = Str.trim input
-    
-    if trimmedInput == "exit" || trimmedInput == "quit" then
-        Stdout.line "Goodbye!"
-    else if trimmedInput == "help" then
-        Stdout.line "Commands:"
-        |> Task.await \_ ->
-        Stdout.line "  help           - Show this message"
-        |> Task.await \_ ->
-        Stdout.line "  research TOPIC - Deep research on a topic"
-        |> Task.await \_ ->
-        Stdout.line "  exit           - Quit the application"
-        |> Task.await \_ ->
-        Stdout.line "  Or type any query to chat with the agent"
-        |> Task.await \_ ->
-        loop {}
-    else if Str.startsWith trimmedInput "research " then
-        topic = Str.dropPrefix trimmedInput "research "
-        runResearch topic
-        |> Task.await \_ ->
-        loop {}
-    else if Str.isEmpty trimmedInput then
-        loop {}
+    if trimmed == "exit" || trimmed == "quit" then
+        Stdout.line!("Goodbye!")
+    else if trimmed == "help" then
+        Stdout.line!("Commands: help, exit, research TOPIC")?
+        loop!({})
+    else if Str.starts_with(trimmed, "research ") then
+        topic = Str.replace_first(trimmed, "research ", "")
+        run_research!(topic)?
+        loop!({})
+    else if Str.is_empty(trimmed) then
+        loop!({})
     else
-        Stdout.line "→ Querying agent..."
-        |> Task.await \_ ->
-        callAgent trimmedInput
-        |> Task.await \resp ->
-        Stdout.line resp
-        |> Task.await \_ ->
-        loop {}
+        Stdout.line!("-> Querying agent...")?
+        resp = call_agent!(trimmed)?
+        Stdout.line!(resp)?
+        loop!({})
 
-callAgent : Str -> Task Str []
-callAgent prompt =
-    safePrompt = Str.replaceEach prompt "\"" "\\\""
-    bodyStr = "{\"prompt\": \"$(safePrompt)\"}"
+call_agent! : Str => Result Str _
+call_agent! = |prompt|
+    safe_prompt = Str.replace_each(prompt, "\"", "\\\"")
+    body_str = Str.concat(Str.concat("{\"prompt\": \"", safe_prompt), "\"}")
     
-    request = { Http.defaultRequest &
-        url: "http://localhost:8000/chat",
-        method: Post,
-        body: Str.toUtf8 bodyStr,
-        headers: [
-            { name: "Content-Type", value: "application/json" }
-        ]
+    request = { Http.default_request &
+        method: POST,
+        headers: [Http.header(("Content-Type", "application/json"))],
+        uri: "http://localhost:8000/chat",
+        body: Str.to_utf8(body_str),
+        timeout_ms: TimeoutMilliseconds(30000),
     }
     
-    Http.send request
-    |> Task.map \resp ->
-        when Str.fromUtf8 resp.body is
-            Ok str -> str
-            Err _ -> "Error: Failed to decode response."
-    |> Task.onErr \_ ->
-        Task.ok "Error: Could not connect to server at localhost:8000."
+    result = Http.send!(request)
+    when result is
+        Ok(response) ->
+            when Str.from_utf8(response.body) is
+                Ok(str) -> Ok(str)
+                Err(_) -> Ok("Error: Failed to decode response.")
+        Err(_) ->
+            Ok("Error: Could not connect to server at localhost:8000.")
